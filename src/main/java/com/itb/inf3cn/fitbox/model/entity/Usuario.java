@@ -3,16 +3,17 @@ package com.itb.inf3cn.fitbox.model.entity;
 
 import com.itb.inf3cn.fitbox.model.enums.TipoUsuario;
 import jakarta.persistence.*;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "Usuario")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "tipo_usuario", discriminatorType = DiscriminatorType.STRING)
-@Setter
-@Getter
+@Setter // atribui informação ao atributo
+@Getter // recupera a informação do atributo
+@NoArgsConstructor // Construtor sem parâmetros (padrão)
+@AllArgsConstructor // Construtor com todos os parâmetros
+@Builder // Forma otimizada para criação de objetos
 @EqualsAndHashCode(onlyExplicitlyIncluded = true) //otimizar a busca dentro de coleções e evitar duplicidade de objetos
 public class Usuario {
 
