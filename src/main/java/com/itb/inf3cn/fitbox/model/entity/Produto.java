@@ -1,9 +1,8 @@
 package com.itb.inf3cn.fitbox.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "Produto")
@@ -16,26 +15,26 @@ import java.math.BigDecimal;
 
 public class Produto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id // PK
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT (Melhor opção para o SQL-SERVER)
     @EqualsAndHashCode.Include
     private Long id;
-    @Column(length = 80, nullable = false)
+    @Column(nullable = false, length = 45)  // false: NOT NULL
     private String nome;
-    @Column(length = 50, nullable = false)
-    private String tipo;
-    @Column(length = 200, nullable = false)
+    @Column(nullable = true, length = 255)
     private String descricao;
-    @Column(nullable = false)
-    private BigDecimal valorCompra;
-    @Column(nullable = false)
-    private BigDecimal valorVenda;
-
-    // Relacionamento "Associação"
-    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
-    @JoinColumn(name = "categoria_id", referencedColumnName = "id", nullable = false)
+    @Column(nullable = true, columnDefinition = "DECIMAL(5,2)")
+    private double valorVenda;
+    @Column(nullable = true, columnDefinition = "DECIMAL(5,2)")
+    private double valorCompra;
+    @Column(nullable = true, length = 20)
+    private String tipo;
+    @JsonIgnore
+    private int quantidadeEstoque;
+    private boolean codStatus;
+    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id", referencedColumnName = "id", nullable = true)
     private Categoria categoria;
 
-    private boolean codStatus;
 
 }

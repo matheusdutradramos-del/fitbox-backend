@@ -1,0 +1,18 @@
+package com.itb.inf3cn.fitbox.dto.produto;
+
+import lombok.*;
+
+@Getter
+@Setter
+public class ProdutoRequest {
+
+    private String nome;
+    private String tipo;
+    private String descricao;
+    private double valorCompra;
+    private double valorVenda;
+    private Long categoriaId;
+    private boolean codStatus;
+    private int quantidadeEstoque;
+
+}
