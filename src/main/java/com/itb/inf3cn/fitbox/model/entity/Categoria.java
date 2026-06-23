@@ -25,7 +25,7 @@ public class Categoria {
 
     // Relacionamento "Associação"
     @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
-    @JoinColumn(name = "categoria_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "categoria_id", referencedColumnName = "id", nullable = true)
     private Produto produto;
 
     private boolean codStatus;

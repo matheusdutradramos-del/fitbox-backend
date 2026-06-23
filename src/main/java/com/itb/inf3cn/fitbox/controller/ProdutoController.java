@@ -1,5 +1,7 @@
 package com.itb.inf3cn.fitbox.controller;
 
+import com.itb.inf3cn.fitbox.exceptions.BadRequest;
+import com.itb.inf3cn.fitbox.exceptions.NotFound;
 import com.itb.inf3cn.fitbox.model.entity.Categoria;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -7,8 +9,10 @@ import com.itb.inf3cn.fitbox.model.entity.Produto;
 import com.itb.inf3cn.fitbox.model.services.CategoriaService;
 import com.itb.inf3cn.fitbox.model.services.ProdutoService;
 import com.itb.inf3cn.fitbox.dto.produto.ProdutoRequest;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-@CrossOrigin(origins = "http://localhost:5173")
+import java.net.URI;
+
 @RestController
 @RequestMapping("/api/v1/produtos")
 public class ProdutoController {
@@ -22,12 +26,18 @@ public class ProdutoController {
     }
 
     @PostMapping
-    public ResponseEntity<Object> saveProduto(@RequestBody ProdutoRequest produtoRequest) {
+    public ResponseEntity<Produto> saveProduto(@RequestBody ProdutoRequest produtoRequest) {
         Produto produto = criarProduto(produtoRequest);
 
-        Produto produtoSalvo = produtoService.save(produto);
-
-        return ResponseEntity.ok(produtoSalvo);
+        if (produtoRequest.getCategoriaId() != null) {
+            try {
+                Categoria categoria = categoriaService.findById(produtoRequest.getCategoriaId());
+            }catch (Exception e){
+                throw new BadRequest("Não foi encontrado a categoria como o id"+ produtoRequest.getCategoriaId());
+            }
+        }
+        URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentRequest().path("/api/v1/produtos").toUriString());
+        return ResponseEntity.created(uri).body(produtoService.save(produto));
     }
 
     private Produto criarProduto (ProdutoRequest produtoRequest) {
@@ -41,10 +51,10 @@ public class ProdutoController {
         produto.setValorCompra(produtoRequest.getValorCompra());
         produto.setQuantidadeEstoque(produtoRequest.getQuantidadeEstoque());
 
-        Categoria categoria = new Categoria();
-        categoria.setId(produtoRequest.getCategoriaId());
+        //Categoria categoria = new Categoria();
+        //categoria.setId(produtoRequest.getCategoriaId());
 
-        produto.setCategoria(categoria);
+        //produto.setCategoria(categoria);
 
         return produto;
     }

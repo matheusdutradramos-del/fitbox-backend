@@ -23,7 +23,7 @@ public class Produto {
     private String nome;
     @Column(nullable = true, length = 255)
     private String descricao;
-    @Column(nullable = true, columnDefinition = "DECIMAL(5,2)")
+    @Column(nullable = false, columnDefinition = "DECIMAL(5,2)")
     private double valorVenda;
     @Column(nullable = true, columnDefinition = "DECIMAL(5,2)")
     private double valorCompra;
