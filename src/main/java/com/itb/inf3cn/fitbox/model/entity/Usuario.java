@@ -4,6 +4,11 @@ package com.itb.inf3cn.fitbox.model.entity;
 import com.itb.inf3cn.fitbox.model.enums.TipoUsuario;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.List;
 
 @Entity
 @Table(name = "Usuario")
@@ -15,7 +20,7 @@ import lombok.*;
 @AllArgsConstructor // Construtor com todos os parâmetros
 @Builder // Forma otimizada para criação de objetos
 @EqualsAndHashCode(onlyExplicitlyIncluded = true) //otimizar a busca dentro de coleções e evitar duplicidade de objetos
-public class Usuario {
+public class Usuario implements UserDetails {
 
     @Id  // Chave Primária
     @GeneratedValue(strategy = GenerationType.IDENTITY) //Auto-Increment (identificado de 1 em 1)
@@ -45,6 +50,36 @@ public class Usuario {
     private String uf;
     private boolean codStatus;
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, name = "tipo usuario", insertable = false, updatable = false)
+    @Column(length = 20, name = "tipo_usuario", insertable = false, updatable = false)
     private TipoUsuario tipoUsuario;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return tipoUsuario.getAuthorities();
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }

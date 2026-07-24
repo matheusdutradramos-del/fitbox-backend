@@ -37,9 +37,7 @@ public class ProdutoService {
         if(produto.getCategoria() != null) {
 
             Categoria categoria = categoriaService.findById(produto.getCategoria().getId());
-            if(categoria == null) {
-                throw new BadRequest("Não foi encontrado a categoria com o id " + produto.getCategoria().getId());
-            }
+            produto.setCategoria(categoria);
         }
 
         return ProdutoRepository.save(produto);

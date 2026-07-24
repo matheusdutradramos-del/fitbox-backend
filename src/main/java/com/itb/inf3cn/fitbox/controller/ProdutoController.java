@@ -12,6 +12,7 @@ import com.itb.inf3cn.fitbox.dto.produto.ProdutoRequest;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/produtos")
@@ -58,5 +59,15 @@ public class ProdutoController {
 
         return produto;
     }
+    @GetMapping
+    public ResponseEntity<List<Produto>> buscarTodos() {
 
+        return ResponseEntity.ok(produtoService.findAll());
+
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Produto> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(produtoService.findById(id));
+    }
 }
