@@ -49,6 +49,16 @@ public class PedidoService {
     }
 
     @Transactional
+    public Pedido atualizarStatus(Long id, String status) {
+
+        Pedido pedido = findById(id);
+
+        pedido.setStatus(status);
+
+        return pedidoRepository.save(pedido);
+    }
+
+    @Transactional
     public void delete(Long id) {
 
         Pedido pedido = findById(id);

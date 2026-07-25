@@ -29,6 +29,13 @@ public class ClienteService {
 
     @Transactional
     public Cliente save(Cliente cliente) {
+
+        cliente.setCodStatus(true);
+
+        if (cliente.getNumeroPontos() == null || cliente.getNumeroPontos().isBlank()) {
+            cliente.setNumeroPontos("0");
+        }
+
         return clienteRepository.save(cliente);
     }
 

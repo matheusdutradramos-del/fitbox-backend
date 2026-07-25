@@ -1,4 +1,5 @@
 package com.itb.inf3cn.fitbox.controller;
+import org.springframework.http.HttpStatus;
 
 import com.itb.inf3cn.fitbox.model.entity.Cliente;
 import com.itb.inf3cn.fitbox.model.services.ClienteService;
@@ -30,7 +31,10 @@ public class ClienteController {
 
     @PostMapping
     public ResponseEntity<Cliente> salvar(@RequestBody Cliente cliente) {
-        return ResponseEntity.ok(clienteService.save(cliente));
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(clienteService.save(cliente));
+
     }
 
     @PutMapping("/{id}")

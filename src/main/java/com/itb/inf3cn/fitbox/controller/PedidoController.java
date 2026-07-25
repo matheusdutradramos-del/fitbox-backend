@@ -41,6 +41,16 @@ public class PedidoController {
         return ResponseEntity.ok(pedidoService.update(id, pedido));
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<Pedido> atualizarStatus(
+            @PathVariable Long id,
+            @RequestBody Pedido pedido) {
+
+        return ResponseEntity.ok(
+                pedidoService.atualizarStatus(id, pedido.getStatus())
+        );
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
 

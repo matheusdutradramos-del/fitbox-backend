@@ -1,5 +1,6 @@
 package com.itb.inf3cn.fitbox.model.entity;
-
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.util.List;
 import jakarta.persistence.*;
 import lombok.*;
 

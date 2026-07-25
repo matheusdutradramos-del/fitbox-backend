@@ -1,14 +1,13 @@
 package com.itb.inf3cn.fitbox.controller;
 
 import com.itb.inf3cn.fitbox.exceptions.BadRequest;
-import com.itb.inf3cn.fitbox.exceptions.NotFound;
 import com.itb.inf3cn.fitbox.model.entity.Categoria;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.itb.inf3cn.fitbox.model.entity.Produto;
 import com.itb.inf3cn.fitbox.model.services.CategoriaService;
 import com.itb.inf3cn.fitbox.model.services.ProdutoService;
-import com.itb.inf3cn.fitbox.dto.produto.ProdutoRequest;
+import com.itb.inf3cn.fitbox.DTO.ProdutoRequest;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;

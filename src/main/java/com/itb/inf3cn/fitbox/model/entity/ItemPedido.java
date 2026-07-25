@@ -1,5 +1,5 @@
 package com.itb.inf3cn.fitbox.model.entity;
-
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,6 +31,7 @@ public class ItemPedido {
     private Produto produto;
     @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @JoinColumn(name = "pedido_id", referencedColumnName = "id", nullable = false)
+    @JsonBackReference
     private Pedido pedido;
 
     private boolean codStatus;

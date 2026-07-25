@@ -1,51 +1,88 @@
 package com.itb.inf3cn.fitbox.model.services;
 
+import com.itb.inf3cn.fitbox.exceptions.NotFound;
 import com.itb.inf3cn.fitbox.model.entity.Categoria;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.itb.inf3cn.fitbox.model.entity.Produto;
 import com.itb.inf3cn.fitbox.model.repository.ProdutoRepository;
-import com.itb.inf3cn.fitbox.exceptions.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class ProdutoService {
 
-    private final ProdutoRepository ProdutoRepository;
+    private final ProdutoRepository produtoRepository;
     private final CategoriaService categoriaService;
 
-    public ProdutoService(ProdutoRepository produtoRepository, CategoriaService categoriaService) {
-        this.ProdutoRepository = produtoRepository;
+    public ProdutoService(
+            ProdutoRepository produtoRepository,
+            CategoriaService categoriaService) {
+
+        this.produtoRepository = produtoRepository;
         this.categoriaService = categoriaService;
     }
 
     public Produto findById(Long id) {
 
-        try {
-            return ProdutoRepository.findById(id).get();
-        } catch (Exception e) {
-            throw new NotFound("Produto não encontrado com o id" + id);
-        }
+        return produtoRepository.findById(id)
+                .orElseThrow(() ->
+                        new NotFound("Produto não encontrado com id " + id));
+    }
+
+    public List<Produto> findAll() {
+        return produtoRepository.findAll();
     }
 
     @Transactional
     public Produto save(Produto produto) {
+
         produto.setCodStatus(true);
 
-        if(produto.getCategoria() != null) {
+        if (produto.getCategoria() != null) {
 
-            Categoria categoria = categoriaService.findById(produto.getCategoria().getId());
+            Categoria categoria =
+                    categoriaService.findById(produto.getCategoria().getId());
+
             produto.setCategoria(categoria);
         }
 
-        return ProdutoRepository.save(produto);
+        return produtoRepository.save(produto);
     }
 
-    public List<Produto> findAll() {
-        return ProdutoRepository.findAll();
+    @Transactional
+    public Produto update(Long id, Produto produtoAtualizado) {
+
+        Produto produto = findById(id);
+
+        produto.setNome(produtoAtualizado.getNome());
+        produto.setDescricao(produtoAtualizado.getDescricao());
+        produto.setTipo(produtoAtualizado.getTipo());
+        produto.setValorCompra(produtoAtualizado.getValorCompra());
+        produto.setValorVenda(produtoAtualizado.getValorVenda());
+        produto.setQuantidadeEstoque(produtoAtualizado.getQuantidadeEstoque());
+        produto.setCodStatus(produtoAtualizado.isCodStatus());
+
+        if (produtoAtualizado.getCategoria() != null) {
+
+            Categoria categoria =
+                    categoriaService.findById(
+                            produtoAtualizado.getCategoria().getId());
+
+            produto.setCategoria(categoria);
+        } else {
+            produto.setCategoria(null);
+        }
+
+        return produtoRepository.save(produto);
     }
 
+    @Transactional
+    public void delete(Long id) {
+
+        Produto produto = findById(id);
+
+        produtoRepository.delete(produto);
+    }
 
 }

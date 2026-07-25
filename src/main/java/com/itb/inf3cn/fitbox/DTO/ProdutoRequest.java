@@ -1,4 +1,4 @@
-package com.itb.inf3cn.fitbox.dto.produto;
+package com.itb.inf3cn.fitbox.DTO;
 
 import lombok.*;
 
