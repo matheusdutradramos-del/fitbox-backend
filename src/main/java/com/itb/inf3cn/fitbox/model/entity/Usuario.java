@@ -55,6 +55,11 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+
+        if (tipoUsuario == null) {
+            return List.of();
+        }
+
         return tipoUsuario.getAuthorities();
     }
 

@@ -10,31 +10,39 @@ import lombok.*;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-
 public class Produto {
 
-    @Id // PK
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT (Melhor opção para o SQL-SERVER)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
-    @Column(nullable = false, length = 45)  // false: NOT NULL
+
+    @Column(nullable = false, length = 45)
     private String nome;
+
     @Column(nullable = true, length = 255)
     private String descricao;
+
     @Column(nullable = false, columnDefinition = "DECIMAL(5,2)")
-    private double valorVenda;
+    private Double valorVenda;
+
     @Column(nullable = true, columnDefinition = "DECIMAL(5,2)")
-    private double valorCompra;
+    private Double valorCompra;
+
     @Column(nullable = true, length = 20)
     private String tipo;
+
     @JsonIgnore
-    private int quantidadeEstoque;
-    private boolean codStatus;
+    private Integer quantidadeEstoque;
+
+    private Boolean codStatus;
+
     @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
-    @JoinColumn(name = "categoria_id", referencedColumnName = "id", nullable = true)
+    @JoinColumn(
+            name = "categoria_id",
+            referencedColumnName = "id",
+            nullable = true
+    )
     private Categoria categoria;
-
-
 }

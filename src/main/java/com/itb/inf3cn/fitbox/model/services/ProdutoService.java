@@ -61,7 +61,7 @@ public class ProdutoService {
         produto.setValorCompra(produtoAtualizado.getValorCompra());
         produto.setValorVenda(produtoAtualizado.getValorVenda());
         produto.setQuantidadeEstoque(produtoAtualizado.getQuantidadeEstoque());
-        produto.setCodStatus(produtoAtualizado.isCodStatus());
+        produto.setCodStatus(produtoAtualizado.getCodStatus());
 
         if (produtoAtualizado.getCategoria() != null) {
 
@@ -84,5 +84,4 @@ public class ProdutoService {
 
         produtoRepository.delete(produto);
     }
-
 }

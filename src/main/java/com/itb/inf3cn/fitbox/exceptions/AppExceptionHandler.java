@@ -30,6 +30,7 @@ public class AppExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleAllException(Exception ex, HttpServletRequest request){
+        ex.printStackTrace();
         //Define o status
         HttpStatus status = EXCEPTION_STATUS_MAP.getOrDefault(ex.getClass(), HttpStatus.INTERNAL_SERVER_ERROR);
         //Define a mensagem

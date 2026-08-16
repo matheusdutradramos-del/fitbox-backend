@@ -29,6 +29,8 @@ public class PedidoRequest {
 
     private String status;
 
-    private List<PedidoRequest> itens;
+    private String pagamento;
+
+    private List<ItemPedidoRequest> itens;
 
 }

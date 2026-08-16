@@ -37,5 +37,13 @@ public class Pedido {
     @JoinColumn(name = "cliente_id", referencedColumnName = "id", nullable = false)
     private Cliente cliente;
 
+    @OneToMany(
+            mappedBy = "pedido",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.EAGER
+    )
+    @JsonManagedReference
+    private List<ItemPedido> itens;
+
     private boolean codStatus;
 }

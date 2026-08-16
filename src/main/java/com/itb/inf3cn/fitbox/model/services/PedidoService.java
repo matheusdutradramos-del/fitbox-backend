@@ -3,6 +3,7 @@ package com.itb.inf3cn.fitbox.model.services;
 import com.itb.inf3cn.fitbox.exceptions.NotFound;
 import com.itb.inf3cn.fitbox.model.entity.Pedido;
 import com.itb.inf3cn.fitbox.model.repository.PedidoRepository;
+import com.itb.inf3cn.fitbox.model.repository.ProdutoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,9 +13,14 @@ import java.util.List;
 public class PedidoService {
 
     private final PedidoRepository pedidoRepository;
+    private final ProdutoRepository produtoRepository;
 
-    public PedidoService(PedidoRepository pedidoRepository) {
+    public PedidoService(
+            PedidoRepository pedidoRepository,
+            ProdutoRepository produtoRepository) {
+
         this.pedidoRepository = pedidoRepository;
+        this.produtoRepository = produtoRepository;
     }
 
     public List<Pedido> findAll() {
@@ -29,7 +35,26 @@ public class PedidoService {
 
     @Transactional
     public Pedido save(Pedido pedido) {
+
+        if (pedido.getItens() != null) {
+
+            pedido.getItens().forEach(item -> {
+
+                item.setPedido(pedido);
+
+                item.setProduto(
+                        produtoRepository.findById(item.getProduto().getId())
+                                .orElseThrow(() ->
+                                        new NotFound("Produto não encontrado.")
+                                )
+                );
+
+            });
+
+        }
+
         return pedidoRepository.save(pedido);
+
     }
 
     @Transactional
