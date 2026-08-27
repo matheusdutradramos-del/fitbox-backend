@@ -37,10 +37,6 @@ public class ProdutoController {
 
         Produto produto = criarProduto(produtoRequest);
 
-        // ==========================================
-        // CATEGORIA
-        // ==========================================
-
         if (produtoRequest.getCategoriaId() != null) {
 
             try {
@@ -69,7 +65,7 @@ public class ProdutoController {
     }
 
     // ==========================================
-    // CRIAR PRODUTO
+    // CRIAR PRODUTO (helper)
     // ==========================================
 
     private Produto criarProduto(
@@ -124,5 +120,54 @@ public class ProdutoController {
         return ResponseEntity.ok(
                 produtoService.findById(id)
         );
+    }
+
+    // ==========================================
+    // ATUALIZAR PRODUTO
+    // ==========================================
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Produto> atualizarProduto(
+            @PathVariable Long id,
+            @RequestBody ProdutoRequest produtoRequest) {
+
+        Produto produtoAtualizado = criarProduto(produtoRequest);
+
+        if (produtoRequest.getCategoriaId() != null) {
+
+            try {
+
+                Categoria categoria =
+                        categoriaService.findById(
+                                produtoRequest.getCategoriaId()
+                        );
+
+                produtoAtualizado.setCategoria(categoria);
+
+            } catch (Exception e) {
+
+                throw new BadRequest(
+                        "Não foi encontrada a categoria com o id "
+                                + produtoRequest.getCategoriaId()
+                );
+            }
+        }
+
+        return ResponseEntity.ok(
+                produtoService.update(id, produtoAtualizado)
+        );
+    }
+
+    // ==========================================
+    // EXCLUIR PRODUTO
+    // ==========================================
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluirProduto(
+            @PathVariable Long id) {
+
+        produtoService.delete(id);
+
+        return ResponseEntity.noContent().build();
     }
 }
