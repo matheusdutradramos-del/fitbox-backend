@@ -1,6 +1,5 @@
 package com.itb.inf3cn.fitbox.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,7 +17,7 @@ public class Produto {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(nullable = false, length = 45)
+    @Column(nullable = false, length = 150)
     private String nome;
 
     @Column(nullable = true, length = 255)
@@ -33,7 +32,9 @@ public class Produto {
     @Column(nullable = true, length = 20)
     private String tipo;
 
-    @JsonIgnore
+    @Column(nullable = true, length = 500)
+    private String imagem;
+
     private Integer quantidadeEstoque;
 
     private Boolean codStatus;

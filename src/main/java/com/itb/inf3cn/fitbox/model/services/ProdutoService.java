@@ -37,7 +37,9 @@ public class ProdutoService {
     @Transactional
     public Produto save(Produto produto) {
 
-        produto.setCodStatus(true);
+        if (produto.getCodStatus() == null) {
+            produto.setCodStatus(true);
+        }
 
         if (produto.getCategoria() != null) {
 
@@ -58,6 +60,7 @@ public class ProdutoService {
         produto.setNome(produtoAtualizado.getNome());
         produto.setDescricao(produtoAtualizado.getDescricao());
         produto.setTipo(produtoAtualizado.getTipo());
+        produto.setImagem(produtoAtualizado.getImagem());
         produto.setValorCompra(produtoAtualizado.getValorCompra());
         produto.setValorVenda(produtoAtualizado.getValorVenda());
         produto.setQuantidadeEstoque(produtoAtualizado.getQuantidadeEstoque());

@@ -9,6 +9,7 @@ public class ProdutoRequest {
     private String nome;
     private String tipo;
     private String descricao;
+    private String imagem;
     private double valorCompra;
     private double valorVenda;
     private Long categoriaId;
