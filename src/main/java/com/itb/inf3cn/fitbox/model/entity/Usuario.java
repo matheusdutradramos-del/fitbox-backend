@@ -48,6 +48,12 @@ public class Usuario implements UserDetails {
     private String cidade;
     @Column(length = 45, nullable = true)
     private String uf;
+    @Column(length = 10, nullable = true)
+    private String numero;
+    @Column(length = 100, nullable = true)
+    private String complemento;
+    @Column(length = 100, nullable = true)
+    private String referencia;
     private boolean codStatus;
     @Enumerated(EnumType.STRING)
     @Column(length = 20, name = "tipo_usuario", insertable = false, updatable = false)

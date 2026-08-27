@@ -130,6 +130,34 @@ public class ClienteService {
                 clienteAtualizado.getNumeroPontos()
         );
 
+        cliente.setLogradouro(
+                clienteAtualizado.getLogradouro()
+        );
+
+        cliente.setNumero(
+                clienteAtualizado.getNumero()
+        );
+
+        cliente.setBairro(
+                clienteAtualizado.getBairro()
+        );
+
+        cliente.setCidade(
+                clienteAtualizado.getCidade()
+        );
+
+        cliente.setCep(
+                clienteAtualizado.getCep()
+        );
+
+        cliente.setComplemento(
+                clienteAtualizado.getComplemento()
+        );
+
+        cliente.setReferencia(
+                clienteAtualizado.getReferencia()
+        );
+
         return clienteRepository.save(cliente);
     }
 
@@ -147,3 +175,5 @@ public class ClienteService {
         clienteRepository.delete(cliente);
     }
 }
+
+
