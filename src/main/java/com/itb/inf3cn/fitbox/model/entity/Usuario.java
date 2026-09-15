@@ -54,6 +54,8 @@ public class Usuario implements UserDetails {
     private String complemento;
     @Column(length = 100, nullable = true)
     private String referencia;
+    private Double latitude;
+    private Double longitude;
     private boolean codStatus;
     @Enumerated(EnumType.STRING)
     @Column(length = 20, name = "tipo_usuario", insertable = false, updatable = false)

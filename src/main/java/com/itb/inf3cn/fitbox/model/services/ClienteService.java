@@ -158,6 +158,14 @@ public class ClienteService {
                 clienteAtualizado.getReferencia()
         );
 
+        cliente.setLatitude(
+                clienteAtualizado.getLatitude()
+        );
+
+        cliente.setLongitude(
+                clienteAtualizado.getLongitude()
+        );
+
         return clienteRepository.save(cliente);
     }
 
@@ -175,5 +183,3 @@ public class ClienteService {
         clienteRepository.delete(cliente);
     }
 }
-
-
