@@ -16,4 +16,8 @@ public class ProdutoRequest {
     private boolean codStatus;
     private int quantidadeEstoque;
 
+    private String proteina;
+    private String calorias;
+    private String carboidratos;
+
 }

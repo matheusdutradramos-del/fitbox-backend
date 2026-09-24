@@ -94,6 +94,18 @@ public class ProdutoController {
                 produtoRequest.isCodStatus()
         );
 
+        produto.setProteina(
+                produtoRequest.getProteina()
+        );
+
+        produto.setCalorias(
+                produtoRequest.getCalorias()
+        );
+
+        produto.setCarboidratos(
+                produtoRequest.getCarboidratos()
+        );
+
         return produto;
     }
 

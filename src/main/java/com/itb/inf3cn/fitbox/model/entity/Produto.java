@@ -39,6 +39,15 @@ public class Produto {
 
     private Boolean codStatus;
 
+    @Column(nullable = true, length = 20)
+    private String proteina;
+
+    @Column(nullable = true, length = 20)
+    private String calorias;
+
+    @Column(nullable = true, length = 20)
+    private String carboidratos;
+
     @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinColumn(
             name = "categoria_id",

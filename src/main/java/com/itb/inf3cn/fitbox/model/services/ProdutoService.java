@@ -65,6 +65,9 @@ public class ProdutoService {
         produto.setValorVenda(produtoAtualizado.getValorVenda());
         produto.setQuantidadeEstoque(produtoAtualizado.getQuantidadeEstoque());
         produto.setCodStatus(produtoAtualizado.getCodStatus());
+        produto.setProteina(produtoAtualizado.getProteina());
+        produto.setCalorias(produtoAtualizado.getCalorias());
+        produto.setCarboidratos(produtoAtualizado.getCarboidratos());
 
         if (produtoAtualizado.getCategoria() != null) {
 
