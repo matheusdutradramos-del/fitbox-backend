@@ -53,14 +53,7 @@ public class AdminController {
                     ));
         }
 
-        Admin admin = adminService.findAll()
-                .stream()
-                .filter(a ->
-                        email.equalsIgnoreCase(a.getEmail())
-                                && password.equals(a.getPassword())
-                )
-                .findFirst()
-                .orElse(null);
+        Admin admin = adminService.login(email, password);
 
         if (admin == null) {
             return ResponseEntity

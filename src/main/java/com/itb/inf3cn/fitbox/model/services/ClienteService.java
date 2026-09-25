@@ -4,6 +4,7 @@ import com.itb.inf3cn.fitbox.exceptions.NotFound;
 import com.itb.inf3cn.fitbox.model.entity.Cliente;
 import com.itb.inf3cn.fitbox.model.repository.ClienteRepository;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,13 +14,47 @@ import java.util.List;
 public class ClienteService {
 
     private final ClienteRepository clienteRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public ClienteService(
-            ClienteRepository clienteRepository
+            ClienteRepository clienteRepository,
+            PasswordEncoder passwordEncoder
     ) {
 
         this.clienteRepository =
                 clienteRepository;
+
+        this.passwordEncoder =
+                passwordEncoder;
+    }
+
+
+    // ==========================================
+    // AUXILIARES DE SENHA
+    // ==========================================
+
+    // Identifica se a senha já está em formato BCrypt (hash),
+    // pra nunca criptografar uma senha que já é um hash.
+    private boolean senhaEstaCriptografada(String senha) {
+
+        return senha != null &&
+                (senha.startsWith("$2a$") ||
+                        senha.startsWith("$2b$") ||
+                        senha.startsWith("$2y$"));
+    }
+
+    // Só criptografa se a senha vier em texto puro.
+    private String protegerSenha(String senha) {
+
+        if (senha == null || senha.isBlank()) {
+            return senha;
+        }
+
+        if (senhaEstaCriptografada(senha)) {
+            return senha;
+        }
+
+        return passwordEncoder.encode(senha);
     }
 
 
@@ -58,20 +93,46 @@ public class ClienteService {
             String password
     ) {
 
-        return clienteRepository
+        Cliente cliente = clienteRepository
                 .findAll()
                 .stream()
                 .filter(
-                        cliente ->
-                                cliente.getEmail() != null &&
-                                        cliente.getPassword() != null &&
-                                        cliente.getEmail()
-                                                .equalsIgnoreCase(email) &&
-                                        cliente.getPassword()
-                                                .equals(password)
+                        c ->
+                                c.getEmail() != null &&
+                                        c.getEmail().equalsIgnoreCase(email)
                 )
                 .findFirst()
                 .orElse(null);
+
+        if (cliente == null || cliente.getPassword() == null) {
+            return null;
+        }
+
+        boolean senhaCorreta;
+
+        if (senhaEstaCriptografada(cliente.getPassword())) {
+
+            // Conta já usa senha em hash: compara com BCrypt
+            senhaCorreta = passwordEncoder.matches(
+                    password,
+                    cliente.getPassword()
+            );
+
+        } else {
+
+            // Conta antiga, senha ainda em texto puro
+            senhaCorreta = cliente.getPassword().equals(password);
+
+            if (senhaCorreta) {
+
+                // Migra a senha pra hash automaticamente no primeiro login
+                cliente.setPassword(passwordEncoder.encode(password));
+
+                clienteRepository.save(cliente);
+            }
+        }
+
+        return senhaCorreta ? cliente : null;
     }
 
 
@@ -81,6 +142,10 @@ public class ClienteService {
 
     @Transactional
     public Cliente save(Cliente cliente) {
+
+        cliente.setPassword(
+                protegerSenha(cliente.getPassword())
+        );
 
         cliente.setCodStatus(true);
 
@@ -123,7 +188,7 @@ public class ClienteService {
         );
 
         cliente.setPassword(
-                clienteAtualizado.getPassword()
+                protegerSenha(clienteAtualizado.getPassword())
         );
 
         cliente.setNumeroPontos(
