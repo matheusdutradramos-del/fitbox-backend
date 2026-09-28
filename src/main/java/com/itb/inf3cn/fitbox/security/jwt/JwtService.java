@@ -4,13 +4,12 @@ import com.itb.inf3cn.fitbox.model.entity.Usuario;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Duration;
 import java.time.ZoneId;
@@ -25,78 +24,72 @@ public class JwtService {
 
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
-    @Value("${application.secutiry.jwt.token-expiration}")
+
+    @Value("${application.security.jwt.token-expiration}")
     private long jwtExpiration;
-    @Value("${application.secutiry.jwt.refresh-token-expiration}")
+
+    @Value("${application.security.jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
 
-    // Método para decodificar a chave
-
+    // Método para pegar a chave de assinatura (corrigido - não usa mais Base64)
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    // Método para extrair as informações do token
-
-    private Claims extracAllClaims(String token) {
+    // Método para extrair todas as informações do token
+    private Claims extractAllClaims(String token) {
         return Jwts
                 .parserBuilder()
                 .setSigningKey(getSignInKey())
                 .build()
-                .parseClaimsJwt(token)
+                .parseClaimsJws(token)
                 .getBody();
     }
 
-    // Método para extrair umm informação especifica, exemplo: d, email etc
-
+    // Método para extrair uma informação específica
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extracAllClaims(token);
+        final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
-
     }
 
     // Método para extrair o username (email)
-
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
     // Método para extrair o id do usuário
-
     public Long extractUserId(String token) {
         return extractClaim(token, claims -> claims.get("id", Long.class));
     }
 
-    // Método para extrair o tempo de expirção do token
-
+    // Método para extrair o tempo de expiração do token
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Agora, métodos para construção do token
-
+    // Método para construção do token
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
 
         ZoneId zoneId = ZoneId.of("America/Sao_Paulo");
         ZonedDateTime agora = ZonedDateTime.now(zoneId);
         ZonedDateTime expira = agora.plus(Duration.ofMillis(expiration));
 
-        return Jwts.builder().setClaims(extraClaims).setSubject(userDetails.getUsername())
+        return Jwts.builder()
+                .setClaims(extraClaims)
+                .setSubject(userDetails.getUsername())
                 .setIssuedAt(Date.from(agora.toInstant()))
                 .setExpiration(Date.from(expira.toInstant()))
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256).compact();
-
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
-    // Métodos polimórficos para gerar o token (dois métodos com o mesmo nome, mas com parâmetros diferentes)
-
+    // Métodos para gerar o token
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        if (userDetails instanceof Usuario usuario){
+        if (userDetails instanceof Usuario usuario) {
             extraClaims.put("role", usuario.getTipoUsuario());
             extraClaims.put("id", usuario.getId());
         }
@@ -104,22 +97,18 @@ public class JwtService {
     }
 
     // Método para verificar a expiração do token
-
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    // Métodos para verificar a validade do token
-
+    // Método para verificar a validade do token
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
 
-    // Método para gerar a atualização do token
-
+    // Método para gerar o refresh token
     public String generateRefreshToken(UserDetails userDetails) {
         return buildToken(new HashMap<>(), userDetails, refreshTokenExpiration);
     }
-
 }

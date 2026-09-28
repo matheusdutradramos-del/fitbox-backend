@@ -1,5 +1,8 @@
 package com.itb.inf3cn.fitbox.controller;
 
+import com.itb.inf3cn.fitbox.DTO.auth.AuthenticationResponse;
+import com.itb.inf3cn.fitbox.DTO.auth.LoginClienteResponse;
+import com.itb.inf3cn.fitbox.DTO.auth.AuthenticationService;
 import com.itb.inf3cn.fitbox.model.entity.Cliente;
 import com.itb.inf3cn.fitbox.model.services.ClienteService;
 
@@ -16,9 +19,14 @@ import java.util.Map;
 public class ClienteController {
 
     private final ClienteService clienteService;
+    private final AuthenticationService authenticationService;
 
-    public ClienteController(ClienteService clienteService) {
+    public ClienteController(
+            ClienteService clienteService,
+            AuthenticationService authenticationService
+    ) {
         this.clienteService = clienteService;
+        this.authenticationService = authenticationService;
     }
 
 
@@ -77,7 +85,18 @@ public class ClienteController {
                     );
         }
 
-        return ResponseEntity.ok(cliente);
+        // Login válido: gera os tokens (access + refresh) e devolve junto
+        // com os dados do cliente, no mesmo formato que o front já usa.
+        AuthenticationResponse tokens =
+                authenticationService.gerarTokens(cliente);
+
+        return ResponseEntity.ok(
+                new LoginClienteResponse(
+                        cliente,
+                        tokens.getAccessToken(),
+                        tokens.getRefreshToken()
+                )
+        );
     }
 
 

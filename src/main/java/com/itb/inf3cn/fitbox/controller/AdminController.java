@@ -1,5 +1,7 @@
 package com.itb.inf3cn.fitbox.controller;
 
+import com.itb.inf3cn.fitbox.DTO.auth.AuthenticationResponse;
+import com.itb.inf3cn.fitbox.DTO.auth.AuthenticationService;
 import com.itb.inf3cn.fitbox.model.entity.Admin;
 import com.itb.inf3cn.fitbox.model.services.AdminService;
 import org.springframework.http.HttpStatus;
@@ -15,9 +17,14 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+    private final AuthenticationService authenticationService;
 
-    public AdminController(AdminService adminService) {
+    public AdminController(
+            AdminService adminService,
+            AuthenticationService authenticationService
+    ) {
         this.adminService = adminService;
+        this.authenticationService = authenticationService;
     }
 
     // =========================
@@ -63,13 +70,19 @@ public class AdminController {
                     ));
         }
 
+        // Login válido: gera os tokens (access + refresh)
+        AuthenticationResponse tokens =
+                authenticationService.gerarTokens(admin);
+
         return ResponseEntity.ok(
                 Map.of(
                         "id", admin.getId(),
                         "nome", admin.getNome(),
                         "email", admin.getEmail(),
                         "tipoUsuario", "ADMIN",
-                        "nivel", "admin"
+                        "nivel", "admin",
+                        "access_token", tokens.getAccessToken(),
+                        "refresh_token", tokens.getRefreshToken()
                 )
         );
     }
