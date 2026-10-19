@@ -1,3 +1,4 @@
+
 package com.itb.inf3cn.fitbox.controller;
 
 import com.itb.inf3cn.fitbox.exceptions.BadRequest;
@@ -6,10 +7,12 @@ import com.itb.inf3cn.fitbox.model.entity.Pedido;
 import com.itb.inf3cn.fitbox.model.services.ClienteService;
 import com.itb.inf3cn.fitbox.model.services.PedidoService;
 import com.itb.inf3cn.fitbox.util.DistanciaUtils;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/v1/pedidos")
@@ -38,51 +41,62 @@ public class PedidoController {
     }
 
     @PostMapping
-    public ResponseEntity<Pedido> salvar(@RequestBody Pedido pedido) {
+    public ResponseEntity<Pedido> salvar(
+            @RequestBody Pedido pedido) {
 
-        // ==========================================
-        // VALIDAR RAIO DE ENTREGA ANTES DE SALVAR
-        // ==========================================
-
+        /*
+         * VALIDACAO DA AREA DE ENTREGA
+         *
+         * A distancia e calculada no servidor usando
+         * as coordenadas cadastradas para o cliente.
+         */
         if (pedido.getCliente() != null
                 && pedido.getCliente().getId() != null) {
 
-            Cliente cliente =
-                    clienteService.findById(
-                            pedido.getCliente().getId()
-                    );
+            Cliente cliente = clienteService.findById(
+                    pedido.getCliente().getId()
+            );
 
-            if (cliente.getLatitude() == null
-                    || cliente.getLongitude() == null) {
+            Double latitude = cliente.getLatitude();
+            Double longitude = cliente.getLongitude();
 
+            if (latitude == null || longitude == null) {
                 throw new BadRequest(
-                        "Não foi possível confirmar sua localização. "
-                                + "Verifique seu endereço cadastrado em 'Meu Endereço'."
+                        "Nao foi possivel confirmar sua localizacao. "
+                                + "Atualize seu endereco em 'Meu Endereco'."
                 );
             }
 
-            boolean dentroDoRaio =
-                    DistanciaUtils.dentroDoRaioDeEntrega(
-                            cliente.getLatitude(),
-                            cliente.getLongitude()
-                    );
-
-            if (!dentroDoRaio) {
-
-                double distancia =
-                        DistanciaUtils.calcularDistanciaKm(
-                                DistanciaUtils.LATITUDE_LOJA,
-                                DistanciaUtils.LONGITUDE_LOJA,
-                                cliente.getLatitude(),
-                                cliente.getLongitude()
-                        );
+            if (!DistanciaUtils.coordenadasValidas(
+                    latitude, longitude)) {
 
                 throw new BadRequest(
-                        "Endereço fora da área de entrega. Você está a "
-                                + String.format("%.1f", distancia)
-                                + "km da loja (limite: "
+                        "As coordenadas do endereco sao invalidas. "
+                                + "Confira o CEP e salve seu endereco novamente."
+                );
+            }
+
+            double distancia =
+                    DistanciaUtils.calcularDistanciaDaLojaKm(
+                            latitude,
+                            longitude
+                    );
+
+            if (distancia > DistanciaUtils.RAIO_MAXIMO_KM) {
+
+                String distanciaFormatada = String.format(
+                        Locale.forLanguageTag("pt-BR"),
+                        "%.1f",
+                        distancia
+                );
+
+                throw new BadRequest(
+                        "Endereco fora da area de entrega. "
+                                + "A distancia em linha reta ate a loja e de "
+                                + distanciaFormatada
+                                + " km. O limite de entrega e de "
                                 + (int) DistanciaUtils.RAIO_MAXIMO_KM
-                                + "km)."
+                                + " km."
                 );
             }
         }
@@ -95,7 +109,9 @@ public class PedidoController {
             @PathVariable Long id,
             @RequestBody Pedido pedido) {
 
-        return ResponseEntity.ok(pedidoService.update(id, pedido));
+        return ResponseEntity.ok(
+                pedidoService.update(id, pedido)
+        );
     }
 
     @PatchMapping("/{id}")
@@ -104,12 +120,16 @@ public class PedidoController {
             @RequestBody Pedido pedido) {
 
         return ResponseEntity.ok(
-                pedidoService.atualizarStatus(id, pedido.getStatus())
+                pedidoService.atualizarStatus(
+                        id,
+                        pedido.getStatus()
+                )
         );
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+    public ResponseEntity<Void> excluir(
+            @PathVariable Long id) {
 
         pedidoService.delete(id);
 
