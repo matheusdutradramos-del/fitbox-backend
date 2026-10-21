@@ -1,58 +1,49 @@
 package com.itb.inf3cn.fitbox.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "Produto")
-@Setter
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "produto")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Produto {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, length = 45)
     private String nome;
-
-    @Column(nullable = true, length = 255)
+    @Column(length = 255)
     private String descricao;
-
-    @Column(nullable = false, columnDefinition = "DECIMAL(5,2)")
+    @Column(nullable = false, columnDefinition = "numeric(7,2)")
     private Double valorVenda;
 
-    @Column(nullable = true, columnDefinition = "DECIMAL(5,2)")
+    @Column(columnDefinition = "numeric(7,2)")
     private Double valorCompra;
-
-    @Column(nullable = true, length = 20)
+    @Column(length = 20)
     private String tipo;
-
-    @Column(nullable = true, length = 500)
-    private String imagem;
-
     private Integer quantidadeEstoque;
-
     private Boolean codStatus;
 
-    @Column(nullable = true, length = 20)
-    private String proteina;
+    // A URL fica salva no banco para a imagem continuar aparecendo após atualizar a página.
+    @Column(name = "imagem", length = 1000)
+    private String imagem;
 
-    @Column(nullable = true, length = 20)
-    private String calorias;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "produto_categoria",
+            joinColumns = @JoinColumn(name = "produto_id"),
+            inverseJoinColumns = @JoinColumn(name = "categoria_id"))
+    @JsonIgnoreProperties({"produtos"})
+    private List<Categoria> categorias = new ArrayList<>();
 
-    @Column(nullable = true, length = 20)
-    private String carboidratos;
-
-    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "categoria_id",
-            referencedColumnName = "id",
-            nullable = true
-    )
+    // Compatibilidade com telas antigas que esperam produto.categoria.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"produtos"})
     private Categoria categoria;
 }
