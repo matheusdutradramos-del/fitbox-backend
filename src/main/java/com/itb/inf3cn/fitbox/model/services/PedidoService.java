@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +22,7 @@ public class PedidoService {
     private static final Set<String> STATUS_PERMITIDOS =
             Set.of("Em preparo", "Saiu para entrega", "Finalizado", "Cancelado");
     private static final long PRAZO_PIX_MINUTOS = 15;
+    private static final ZoneId FUSO_BRASIL = ZoneId.of("America/Sao_Paulo");
 
     private final PedidoRepository pedidoRepository;
     private final ProdutoRepository produtoRepository;
@@ -29,6 +30,10 @@ public class PedidoService {
     public PedidoService(PedidoRepository pedidoRepository, ProdutoRepository produtoRepository) {
         this.pedidoRepository = pedidoRepository;
         this.produtoRepository = produtoRepository;
+    }
+
+    private LocalDateTime agoraBrasil() {
+        return LocalDateTime.now(FUSO_BRASIL);
     }
 
     @Transactional(readOnly = true)
@@ -42,11 +47,6 @@ public class PedidoService {
                 .orElseThrow(() -> new NotFound("Pedido não encontrado com id " + id));
     }
 
-    /**
-     * Valida e baixa o estoque na mesma transação que grava o pedido.
-     * O bloqueio pessimista no repositório de produtos é recomendado para
-     * impedir que pedidos simultâneos consumam as mesmas unidades.
-     */
     @Transactional
     public Pedido save(Pedido pedido) {
         if (pedido.getCliente() == null || pedido.getCliente().getId() == null) {
@@ -56,11 +56,11 @@ public class PedidoService {
             throw new IllegalArgumentException("O pedido precisa ter pelo menos um item.");
         }
 
-        if (pedido.getDataHoraPedido() == null) pedido.setDataHoraPedido(LocalDateTime.now());
+        // Sempre usar o relógio do servidor no fuso de São Paulo para novos pedidos.
+        pedido.setDataHoraPedido(agoraBrasil());
         if (pedido.getStatus() == null || pedido.getStatus().isBlank()) pedido.setStatus("Em preparo");
         if (pedido.getMinutosEstimados() == null) pedido.setMinutosEstimados(45);
 
-// Agrupa quantidades por produto para evitar contornar o limite repetindo o mesmo produto.
         Map<Long, Integer> quantidadesPorProduto = new LinkedHashMap<>();
         for (ItemPedido item : pedido.getItens()) {
             if (item.getProduto() == null || item.getProduto().getId() == null) {
@@ -73,7 +73,6 @@ public class PedidoService {
             quantidadesPorProduto.merge(item.getProduto().getId(), quantidade, Integer::sum);
         }
 
-// Buscar e validar todos os produtos antes de alterar qualquer estoque.
         Map<Long, Produto> produtosValidados = new LinkedHashMap<>();
         for (Map.Entry<Long, Integer> entrada : quantidadesPorProduto.entrySet()) {
             Produto produto = produtoRepository.findById(entrada.getKey())
@@ -89,11 +88,10 @@ public class PedidoService {
             produtosValidados.put(entrada.getKey(), produto);
         }
 
-// Desconta estoque. Como o método é transacional, uma falha ao salvar o pedido
-// reverte também estas alterações.
         for (Map.Entry<Long, Integer> entrada : quantidadesPorProduto.entrySet()) {
             Produto produto = produtosValidados.get(entrada.getKey());
-            produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - entrada.getValue());
+            int estoqueAtual = produto.getQuantidadeEstoque() == null ? 0 : produto.getQuantidadeEstoque();
+            produto.setQuantidadeEstoque(estoqueAtual - entrada.getValue());
             produtoRepository.save(produto);
         }
 
@@ -131,7 +129,7 @@ public class PedidoService {
         pedido.setStatus(validarStatus(status));
         if ("Finalizado".equals(pedido.getStatus())) {
             pedido.setMinutosEstimados(0);
-            pedido.setDataHoraEntrega(LocalDateTime.now());
+            pedido.setDataHoraEntrega(agoraBrasil());
         }
         return pedidoRepository.save(pedido);
     }
@@ -145,7 +143,7 @@ public class PedidoService {
         pedido.setStatus(validarStatus(status));
         if ("Finalizado".equals(pedido.getStatus())) {
             pedido.setMinutosEstimados(0);
-            pedido.setDataHoraEntrega(LocalDateTime.now());
+            pedido.setDataHoraEntrega(agoraBrasil());
         } else {
             if (minutosEstimados == null || minutosEstimados < 0 || minutosEstimados > 1440) {
                 throw new IllegalArgumentException("Informe uma previsão entre 0 e 1440 minutos.");
@@ -164,25 +162,40 @@ public class PedidoService {
             throw new IllegalArgumentException("Não é possível cancelar um pedido finalizado.");
         }
 
-        String pagamento = pedido.getPagamento() == null ? "" : pedido.getPagamento().trim().toLowerCase();
+        String pagamento = pedido.getPagamento() == null
+                ? "" : pedido.getPagamento().trim().toLowerCase();
         if (!pagamento.equals("pix")) {
-            throw new IllegalArgumentException("O cancelamento por prazo é permitido somente para pedidos via PIX.");
+            throw new IllegalArgumentException(
+                    "O cancelamento por prazo é permitido somente para pedidos via PIX."
+            );
         }
         if (pedido.getDataHoraPedido() == null) {
             throw new IllegalArgumentException("O pedido não possui data de criação para validar o prazo.");
         }
-        long minutosDecorridos = ChronoUnit.MINUTES.between(pedido.getDataHoraPedido(), LocalDateTime.now());
-        if (minutosDecorridos < PRAZO_PIX_MINUTOS) {
-            throw new IllegalArgumentException("Só é possível cancelar após 15 minutos da criação do pedido via PIX.");
+
+        // Pedidos antigos podem ter sido gravados com o relógio do servidor em UTC.
+        // Se a data estiver até 3h à frente do horário de São Paulo, normaliza esse registro legado.
+        LocalDateTime agora = agoraBrasil();
+        LocalDateTime dataPedido = pedido.getDataHoraPedido();
+        if (dataPedido.isAfter(agora)
+                && !dataPedido.isAfter(agora.plusHours(3))) {
+            dataPedido = dataPedido.minusHours(3);
+            pedido.setDataHoraPedido(dataPedido);
         }
 
-// Devolve o estoque uma única vez, antes de marcar o pedido como cancelado.
+        long minutosDecorridos = ChronoUnit.MINUTES.between(dataPedido, agora);
+        if (minutosDecorridos < PRAZO_PIX_MINUTOS) {
+            throw new IllegalArgumentException(
+                    "Só é possível cancelar após 15 minutos da criação do pedido via PIX."
+            );
+        }
+
         devolverEstoque(pedido);
         pedido.setStatus("Cancelado");
         pedido.setMotivoCancelamento(
                 "Pedido cancelado porque o pagamento via PIX não foi confirmado dentro do prazo de 15 minutos."
         );
-        pedido.setDataHoraCancelamento(LocalDateTime.now());
+        pedido.setDataHoraCancelamento(agoraBrasil());
         pedido.setMinutosEstimados(0);
         return pedidoRepository.save(pedido);
     }
@@ -190,11 +203,15 @@ public class PedidoService {
     private void devolverEstoque(Pedido pedido) {
         if (pedido.getItens() == null) return;
         Map<Long, Integer> quantidades = new LinkedHashMap<>();
+
         for (ItemPedido item : pedido.getItens()) {
             if (item.getProduto() == null || item.getProduto().getId() == null) continue;
             int quantidade = item.getQuantidadeItem();
-            if (quantidade > 0) quantidades.merge(item.getProduto().getId(), quantidade, Integer::sum);
+            if (quantidade > 0) {
+                quantidades.merge(item.getProduto().getId(), quantidade, Integer::sum);
+            }
         }
+
         for (Map.Entry<Long, Integer> entrada : quantidades.entrySet()) {
             Produto produto = produtoRepository.findById(entrada.getKey())
                     .orElseThrow(() -> new NotFound("Produto não encontrado ao devolver estoque."));

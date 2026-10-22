@@ -1,5 +1,5 @@
 package com.itb.inf3cn.fitbox.controller;
-
+import com.itb.inf3cn.fitbox.DTO.AtualizarAcompanhamentoRequest;
 import com.itb.inf3cn.fitbox.model.entity.Pedido;
 import com.itb.inf3cn.fitbox.model.services.PedidoService;
 import org.springframework.http.ResponseEntity;

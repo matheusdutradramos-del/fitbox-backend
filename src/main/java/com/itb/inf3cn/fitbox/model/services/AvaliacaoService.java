@@ -7,6 +7,8 @@ import com.itb.inf3cn.fitbox.model.entity.Cliente;
 import com.itb.inf3cn.fitbox.model.entity.Pedido;
 import com.itb.inf3cn.fitbox.model.entity.Produto;
 import com.itb.inf3cn.fitbox.model.repository.AvaliacaoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +28,6 @@ public class AvaliacaoService {
             ClienteService clienteService,
             ProdutoService produtoService,
             PedidoService pedidoService) {
-
         this.avaliacaoRepository = avaliacaoRepository;
         this.clienteService = clienteService;
         this.produtoService = produtoService;
@@ -34,20 +35,28 @@ public class AvaliacaoService {
     }
 
     public Avaliacao findById(Long id) {
-
         return avaliacaoRepository.findById(id)
-                .orElseThrow(() ->
-                        new NotFound("Avaliação não encontrada com id " + id));
+                .orElseThrow(() -> new NotFound("Avaliação não encontrada com id " + id));
     }
 
+    // Mantido para compatibilidade com a tela administrativa existente.
     public List<Avaliacao> findAll() {
-
         return avaliacaoRepository.findAll();
     }
 
-    // ==========================================
-    // CRIAR AVALIAÇÃO (feita pelo cliente)
-    // ==========================================
+    // Avaliações públicas, ordenadas da mais recente para a mais antiga.
+    public Page<Avaliacao> listarPublicas(Pageable pageable) {
+        return avaliacaoRepository.findAllByOrderByDataAvaliacaoDesc(pageable);
+    }
+
+    // Histórico privado do cliente, também paginado no banco.
+    public Page<Avaliacao> listarPorCliente(Long clienteId, Pageable pageable) {
+        if (clienteId == null) {
+            throw new BadRequest("O ID do cliente é obrigatório.");
+        }
+        clienteService.findById(clienteId);
+        return avaliacaoRepository.findByCliente_IdOrderByDataAvaliacaoDesc(clienteId, pageable);
+    }
 
     @Transactional
     public Avaliacao save(
@@ -58,21 +67,15 @@ public class AvaliacaoService {
             Long pedidoId) {
 
         if (nota == null || nota < 1 || nota > 5) {
-
-            throw new BadRequest(
-                    "A nota deve ser entre 1 e 5."
-            );
+            throw new BadRequest("A nota deve ser entre 1 e 5.");
+        }
+        if (clienteId == null || produtoId == null) {
+            throw new BadRequest("Cliente e produto são obrigatórios.");
         }
 
         Cliente cliente = clienteService.findById(clienteId);
         Produto produto = produtoService.findById(produtoId);
-
-        Pedido pedido = null;
-
-        if (pedidoId != null) {
-
-            pedido = pedidoService.findById(pedidoId);
-        }
+        Pedido pedido = pedidoId == null ? null : pedidoService.findById(pedidoId);
 
         Avaliacao avaliacao = Avaliacao.builder()
                 .nota(nota)
@@ -88,50 +91,20 @@ public class AvaliacaoService {
         return avaliacaoRepository.save(avaliacao);
     }
 
-    // ==========================================
-    // ADMIN RESPONDE A AVALIAÇÃO
-    // ==========================================
-
     @Transactional
-    public Avaliacao responder(
-            Long id,
-            String respostaAdmin) {
-
+    public Avaliacao responder(Long id, String respostaAdmin) {
         Avaliacao avaliacao = findById(id);
-
         if (respostaAdmin == null || respostaAdmin.trim().isEmpty()) {
-
-            throw new BadRequest(
-                    "A resposta não pode ser vazia."
-            );
+            throw new BadRequest("A resposta não pode ser vazia.");
         }
-
-        avaliacao.setRespostaAdmin(respostaAdmin);
+        avaliacao.setRespostaAdmin(respostaAdmin.trim());
         avaliacao.setRespondido(true);
-
         return avaliacaoRepository.save(avaliacao);
     }
 
-    // ==========================================
-    // EXCLUIR AVALIAÇÃO
-    // ==========================================
-
     @Transactional
     public void delete(Long id) {
-
         Avaliacao avaliacao = findById(id);
-
         avaliacaoRepository.delete(avaliacao);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
