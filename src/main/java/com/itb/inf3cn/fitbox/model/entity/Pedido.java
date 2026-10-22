@@ -46,6 +46,12 @@ public class Pedido {
     @Column(nullable = false)
     private Integer minutosEstimados = 30;
 
+    @Column(length = 300)
+    private String motivoCancelamento;
+
+    @Column
+    private LocalDateTime dataHoraCancelamento;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "cliente_id", referencedColumnName = "id", nullable = false)
     private Cliente cliente;

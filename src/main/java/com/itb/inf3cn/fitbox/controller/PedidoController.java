@@ -1,6 +1,5 @@
 package com.itb.inf3cn.fitbox.controller;
 
-import com.itb.inf3cn.fitbox.DTO.AtualizarAcompanhamentoRequest;
 import com.itb.inf3cn.fitbox.model.entity.Pedido;
 import com.itb.inf3cn.fitbox.model.services.PedidoService;
 import org.springframework.http.ResponseEntity;
@@ -52,6 +51,20 @@ public class PedidoController {
         );
     }
 
+    /*
+     * Cancelamento lógico: mantém o pedido no banco para que o cliente
+     * veja o aviso e o administrador preserve o histórico.
+     * O serviço valida método de pagamento e prazo de 15 minutos.
+     */
+    @PatchMapping("/{id}/cancelar-pix")
+    public ResponseEntity<Pedido> cancelarPixPorPrazo(@PathVariable Long id) {
+        return ResponseEntity.ok(pedidoService.cancelarPixPorPrazo(id));
+    }
+
+    /*
+     * Mantido por compatibilidade com o projeto existente.
+     * Não usar este endpoint para o cancelamento por prazo de PIX.
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
         pedidoService.delete(id);
